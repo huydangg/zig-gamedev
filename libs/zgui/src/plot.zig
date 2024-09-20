@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 const assert = @import("std").debug.assert;
+const std = @import("std");
 const gui = @import("gui.zig");
 //--------------------------------------------------------------------------------------------------
 pub fn init() void {
@@ -628,6 +629,35 @@ extern fn zguiPlot_PlotBarsValues(
     offset: i32,
     stride: i32,
 ) void;
+
+fn PlotCandleStickValuesGen(comptime T: type) type {
+    return struct {
+        xs: []const T,
+        opens: []const T,
+        closes: []const T,
+        lows: []const T,
+        highs: []const T,
+    };
+}
+pub fn plotCandleStick(label_id: [:0]const u8, count: usize, tooltip: bool, width_percent: f32, bull_col: [4]f32, bear_col: [4]f32, comptime T: type, args: PlotCandleStickValuesGen(T)) void {
+    zguiPlot_PlotCandleStick(label_id, count, tooltip, width_percent, &bull_col, &bear_col, args.xs.ptr, args.opens.ptr, args.closes.ptr, args.lows.ptr, args.highs.ptr);
+}
+
+// xv: *const anyopaque,
+// yv: *const anyopaque,
+extern fn zguiPlot_PlotCandleStick(
+    label_id: [*:0]const u8,
+    count: usize,
+    tooltip: bool,
+    width_percent: f32,
+    bull_col: *const [4]f32,
+    bear_col: *const [4]f32,
+    xs: *const anyopaque,
+    opens: *const anyopaque,
+    closes: *const anyopaque,
+    lows: *const anyopaque,
+    highs: *const anyopaque,
+) void;
 //----------------------------------------------------------------------------------------------
 pub const DragToolFlags = packed struct(u32) {
     no_cursors: bool = false,
@@ -677,6 +707,58 @@ extern fn zguiPlot_PlotText(
     flags: PlotTextFlags,
 ) void;
 
+// ZGUI_API void zguiPlot_SetupAxisFormat(ImAxis axis, const char *fmt) {
+//   ImPlot::SetupAxisFormat(axis, fmt)
+// };
+//
+// // void SetupAxisScale(ImAxis idx, ImPlotScale scale)
+// ZGUI_API void zguiPlot_SetupAxisScale(ImAxis idx, ImPlotScale scale) {
+//   ImPlot::SetupAxisScale(idx, scale);
+// };
+pub const PlotScale = enum(i32) {
+    scale_linear = 0, // default linear scale
+    scale_time, // date/time scale
+    scale_log10, // base 10 logartithmic scale
+    scale_symlog, // symmetric log scale
+};
+
+pub fn setupAxisFormat(axis: Axis, fmt: [*:0]const u8) void {
+    zguiPlot_SetupAxisFormat(axis, fmt);
+}
+extern fn zguiPlot_SetupAxisFormat(
+    axis: Axis,
+    fmt: [*:0]const u8,
+) void;
+
+pub fn setupAxisScale(axis: Axis, scale: PlotScale) void {
+    zguiPlot_SetupAxisScale(axis, scale);
+}
+extern fn zguiPlot_SetupAxisScale(
+    axis: Axis,
+    scale: PlotScale,
+) void;
+
+// ZGUI_API void zguiPlot_SetupAxisLimitsConstraints(ImAxis axis, double v_min,
+pub fn setupAxisLimitsConstraints(axis: Axis, v_min: f64, v_max: f64) void {
+    zguiPlot_SetupAxisLimitsConstraints(axis, v_min, v_max);
+}
+
+extern fn zguiPlot_SetupAxisLimitsConstraints(
+    axis: Axis,
+    v_min: f64,
+    v_max: f64,
+) void;
+
+// ZGUI_API void zguiPlot_SetupAxisZoomConstraints(ImAxis axis, double z_min, double z_max)
+pub fn setupAxisZoomConstraints(axis: Axis, z_min: f64, z_max: f64) void {
+    zguiPlot_SetupAxisZoomConstraints(axis, z_min, z_max);
+}
+
+extern fn zguiPlot_SetupAxisZoomConstraints(
+    axis: Axis,
+    z_min: f64,
+    z_max: f64,
+) void;
 //----------------------------------------------------------------------------------------------
 pub fn isPlotHovered() bool {
     return zguiPlot_IsPlotHovered();
